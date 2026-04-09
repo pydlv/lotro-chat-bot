@@ -5,13 +5,6 @@ import "Turbine.Gameplay";
 import "Turbine.UI";
 import "Turbine.UI.Lotro";
 
--- keep the order
-import (path .. ".utf8");
-import (path .. ".utf8upperMap");
-import (path .. ".utf8lowerMap");
-import (path .. ".bit");
-bit32 = _G.M;
-
 function DebugOut(arg)
 	message = "";
 
