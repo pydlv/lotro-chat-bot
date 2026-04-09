@@ -115,4 +115,4 @@ connector.on_message_event = on_ingame_message;
 
 client.loop.create_task(uptime_count());
 client.loop.create_task(message_sender());
-client.run("NTY4MTE3NTg3MzgxMzIxNzMy.XLda6A.PUCP2nMIIjGltqA-fUQ-_ZIJTJE");
+client.run("YOUR_DISCORD_BOT_TOKEN_HERE");
