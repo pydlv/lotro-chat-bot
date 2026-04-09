@@ -38,7 +38,7 @@ The system has three layers:
 | `python/__init__.py` | Entry point. Starts the connector thread and runs the Discord bot. |
 | `python/connector.py` | Core IPC logic. Discovers the hook address, polls it for packets, and fires `on_message_event` when a full message is received. |
 | `python/mytypes.py` | Utility functions: converts between an 8-byte `c_uint8` array and a `c_double` (the wire format). |
-| `cpp/GreatVault/` | Visual Studio C++ project for `scanner.exe`. Scans LOTRO's process memory to find the hook address. |
+| `cpp/main.cpp` | C++ source for `scanner.exe`. Scans LOTRO's process memory for the hook address. |
 | `cheatengine-library-master/` | Third-party Cheat Engine library used by the scanner. |
 | `ce-lib64.dll` | 64-bit Cheat Engine DLL required at runtime by the scanner. |
 
@@ -51,7 +51,7 @@ LOTRO does not expose a public API, so the bot communicates with a LOTRO Lua plu
 ### How the hook address is found
 
 1. The LOTRO Lua plugin allocates a local variable with a known sentinel value and watches a `double` at a stable address.
-2. At startup, `scanner.exe` (built from `cpp/GreatVault/`) scans LOTRO's virtual memory for the sentinel and prints the address.
+2. At startup, `scanner.exe` (built from `cpp/main.cpp`) scans LOTRO's virtual memory for the sentinel and prints the address.
 3. Python opens a handle to the LOTRO process with `PROCESS_ALL_ACCESS` and uses `ReadProcessMemory` / `WriteProcessMemory` to read and write that address.
 
 ### Packet format
@@ -98,7 +98,7 @@ Data packets sent **from** Python use even-numbered IDs (2, 4, 6, …, 254, then
 - Python 3.6+
 - `discord.py` library (`pip install discord.py`)
 - LOTRO with a compatible Lua plugin installed (the plugin must expose the hook double)
-- `scanner.exe` built from `cpp/GreatVault/` and placed at the **repository root**
+- `scanner.exe` compiled from `cpp/main.cpp` and placed at the **repository root**
 - `ce-lib64.dll` present at the repository root (already committed)
 
 ### Configuration
