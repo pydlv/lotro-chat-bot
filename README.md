@@ -40,6 +40,8 @@ The system has three layers:
 | `python/connector.py` | Core IPC logic. Discovers the hook address, polls it for packets, and fires `on_message_event` when a full message is received. |
 | `python/mytypes.py` | Utility functions: converts between an 8-byte `c_uint8` array and a `c_double` (the wire format). |
 | `cpp/main.cpp` | C++ source for `scanner.exe`. Scans LOTRO's process memory for the hook address. |
+| `cheatengine-library-master/` | Third-party Cheat Engine library used by the scanner. |
+| `ce-lib64.dll` | 64-bit Cheat Engine DLL required at runtime by the scanner. |
 
 ---
 
@@ -121,6 +123,7 @@ The plugin registers a `Turbine.Chat:Received` handler. When any chat message ar
 - `discord.py` library (`pip install discord.py`)
 - LOTRO with the `lua_plugin/` plugin installed via the in-game Plugin Manager
 - `scanner.exe` compiled from `cpp/main.cpp` and placed at the **repository root**
+- `ce-lib64.dll` present at the repository root (already committed)
 
 ### Configuration
 
