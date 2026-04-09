@@ -35,6 +35,11 @@ The system has three layers:
 
 | File | Role |
 |------|------|
+| `lua_plugin/__init__.lua` | LOTRO Lua plugin entry point. Listens for chat messages and streams them to Python via the shared hook variable. |
+| `lua_plugin/bit.lua` | Pure-Lua bitwise operations library (third-party). Polyfills `bit32` for the LOTRO Lua environment. |
+| `lua_plugin/utf8.lua` | UTF-8 string utilities (third-party). |
+| `lua_plugin/utf8upperMap.lua` | UTF-8 upper-case mapping table (third-party). |
+| `lua_plugin/utf8lowerMap.lua` | UTF-8 lower-case mapping table (third-party). |
 | `python/__init__.py` | Entry point. Starts the connector thread and runs the Discord bot. |
 | `python/connector.py` | Core IPC logic. Discovers the hook address, polls it for packets, and fires `on_message_event` when a full message is received. |
 | `python/mytypes.py` | Utility functions: converts between an 8-byte `c_uint8` array and a `c_double` (the wire format). |
@@ -89,6 +94,38 @@ Data packets sent **from** Python use even-numbered IDs (2, 4, 6, …, 254, then
 
 ---
 
+## Lua Plugin (`lua_plugin/`)
+
+The LOTRO Lua plugin lives in `lua_plugin/` and runs inside the game client. It is a standard LOTRO Turbine plugin loaded from the in-game Plugin Manager.
+
+### Startup handshake
+
+1. On load, the plugin initialises `hook` to the sentinel value `29382838` and starts polling every second.
+2. Python writes `2.0` to the hook address to signal it is ready.
+3. When the plugin sees `hook == 2`, it calls `continue()`, which sets `hook = 1337`.
+4. Python detects `hook == 1337` and records the confirmed hook address. Normal operation begins.
+
+### Chat message transmission
+
+The plugin registers a `Turbine.Chat:Received` handler. When any chat message arrives:
+
+1. The message string is padded with `\0` bytes to the nearest multiple of 7.
+2. It is split into 7-byte chunks. Each chunk is prefixed with `0x03` (the packet-ID byte) to form an 8-byte group.
+3. The groups are pushed onto `send_queue`.
+4. `empty_queue()` drains the queue: for each group it calls `readDouble()` to convert the 8 bytes into a `double`, writes that value to `hook`, then spin-waits until Python acknowledges by writing `python_ready` (`5e-324`) back.
+5. After the last group, the plugin writes `finished_tx` (`1.5e-323`) to signal end-of-message.
+
+### Included third-party libraries
+
+| File | Purpose |
+|------|---------|
+| `bit.lua` | Pure-Lua bitwise operations; polyfills `bit32` for LOTRO's Lua 5.1 environment. |
+| `utf8.lua` | UTF-8 aware string length, character iteration, and printable-character filtering. |
+| `utf8upperMap.lua` | Unicode upper-case mapping table used by `utf8.lua`. |
+| `utf8lowerMap.lua` | Unicode lower-case mapping table used by `utf8.lua`. |
+
+---
+
 ## Setup
 
 > **Platform:** Windows only (requires `ReadProcessMemory` / `WriteProcessMemory`).
@@ -97,7 +134,7 @@ Data packets sent **from** Python use even-numbered IDs (2, 4, 6, …, 254, then
 
 - Python 3.6+
 - `discord.py` library (`pip install discord.py`)
-- LOTRO with a compatible Lua plugin installed (the plugin must expose the hook double)
+- LOTRO with the `lua_plugin/` plugin installed via the in-game Plugin Manager
 - `scanner.exe` compiled from `cpp/main.cpp` and placed at the **repository root**
 - `ce-lib64.dll` present at the repository root (already committed)
 

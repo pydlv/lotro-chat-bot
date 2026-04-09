@@ -69,48 +69,6 @@ function Timer:Constructor( delay, callback )
 end
 
 
-local my_string = "ПфышояА"
-
-
-local lock = false;
-local message_queue = {};
-
-
--- Returns true if succeeded else false
-function tx_double(double)
-	if (not lock) then
-		lock = true;
-
-		-- This looks so paradoxical but it should work...
-		repeat hook = -1 until hook == -2;
-
-		-- We have been ACK so go ahead and tx
-		repeat hook = double until hook == -2;
-
-		-- Signal end of tx
-		repeat hook = 0 until hook == -2;
-
-		lock = false;
-
-		return True;
-	else
-		return false;
-	end
-end
-
-
-function check_queue()
-	while (#message_queue) do
-		if (not lock) then
-			head = table.remove(message_queue, 1);
-
-			repeat
-				success = tx_double(head);
-			until success == true;
-		end
-	end
-end
-
 function readDouble(bytes) 
   local sign = 1
   local mantissa = bytes[2] % 2^4
@@ -161,35 +119,6 @@ finished_tx = 1.5e-323;
 function continue()
 	DebugOut("Ready")
 	hook = 1337
-
-	-- packet = readDouble({0x03, 0x68, 0x69, 0x00, 0x00, 0x00, 0x00, 0x00})
-
-	-- hook = packet
-
-	-- while(hook ~= python_ready) do
-	-- 	local n = 1+1; -- we're just waiting
-	-- end
-
-
-	-- hook = finished_tx;
-
-	-- DebugOut("Done! :D");
-	
-
-	-- correct value
-	-- hook = 3.05762892619533E-292
-
-
-
-	-- repeat hook = 3 until hook == -2;
-
-	-- message1 = 0xCCCCCCCCCCCCCCCC;
-	-- message2 = 0xFFFFFFFFFFFFFFFF;
-
-	-- table.insert(message_queue, message1);
-	-- table.insert(message_queue, message2);
-
-	-- check_queue();
 end
 
 -- Wait for first comm
@@ -266,52 +195,4 @@ function Turbine.Chat:Received(args)
 	table.insert(send_queue, msg_bytes);
 
 	empty_queue();
-end
-
-
-
-
-function asdf()
-
-	local num_groups = #message / 7
-
-	local whole_groups = math.floor(num_groups);
-	local num_remainder = #message % 7;
-	local num_trailing_zeros = 7 - num_remainder;
-
-	local ranges = {}
-	for i = 1, whole_groups do
-		table.insert(ranges, {(i-1)*7+1, (i-1)*7+8})
-	end
-
-	local parts = {}
-	for i, v in pairs(ranges) do
-		-- Don't through v[1] but not including v[2] i.e. [v[1], v[2])
-		table.insert(parts, string.sub(message, v[1], v[2]-1))
-		DebugOut(parts[i]);
-	end
-
-	if (num_remainder) then
-		local trailing_zeros = ""
-		for i=1, num_trailing_zeros do
-			trailing_zeros = trailing_zeros .. string.char(0);
-		end
-
-		table.insert(parts, string.sub(message, -num_remainder) .. trailing_zeros);
-	end
-
-	for i, part in pairs(parts) do
-		--DebugOut(part);
-	end
-
-	-- for _, part in pairs(parts) do
-	-- 	local dub = 0;
-
-	-- 	for i = 1, 7 do
-	-- 		local int1 = string.byte(part, i);
-
-	-- 		dub = bit32.bor( bit32.lshift(int1, 8*(i-1)) , dub )
-	-- 	end
-	-- end
-
 end
